@@ -76,19 +76,12 @@ class EasyBotter
     }        
     //表示用HTML
     function printHeader(){
-        $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-        $header .= '<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">';
-        $header .= '<head>';
-        $header .= '<meta http-equiv="content-language" content="ja" />';
-        $header .= '<meta http-equiv="content-type" content="text/html; charset=UTF-8" />';
-        $header .= '<title>EasyBotter</title>';
-        $header .= '</head>';
-        $header .= '<body><pre>';
+        $header = '['.date("Y/m/d H:i:s").']';
         print $header;
     }
     //表示用HTML
     function printFooter(){
-        echo "</body></html>";
+        echo "\n";
     }
 
 //============================================================
@@ -99,7 +92,7 @@ class EasyBotter
     function postRandom($datafile = "data.txt"){        
         $status = $this->makeTweet($datafile);                
         if(empty($status)){
-            $message = "投稿するメッセージがないようです。<br />";
+            $message = "投稿するメッセージがないようです。";
             echo $message;
             return array("error"=> $message);
         }else{                
@@ -117,7 +110,7 @@ class EasyBotter
         if($status !== $lastPhrase){
             $this->rotateData($datafile);        
             if(empty($status)){
-                $message = "投稿するメッセージがないようです。<br />";
+                $message = "投稿するメッセージがないようです。";
                 echo $message;
                 return array("error"=> $message);
             }else{                
@@ -128,7 +121,7 @@ class EasyBotter
                 return $this->showResult($this->setUpdate(array("status"=>$status)), $status);            
             }
         }else{
-            $message = "終了する予定のフレーズ「".$lastPhrase."」が来たので終了します。<br />";
+            $message = "終了する予定のフレーズ「".$lastPhrase."」が来たので終了します。";
             echo $message;
             return array("error"=> $message);
         }
@@ -171,7 +164,7 @@ class EasyBotter
                 }
             }
         }else{
-            $message = $cron."分以内に受け取った未返答のリプライはないようです。<br /><br />";
+            $message = $cron."分以内に受け取った未返答のリプライはないようです。";
             echo $message;
             $results[] = $message;
         }
@@ -206,12 +199,12 @@ class EasyBotter
                     }
                 }
             }else{
-                $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。<br /><br />";
+                $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。";
                 echo $message;
                 $results = $message;
             }
         }else{
-            $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。<br /><br />";
+            $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。";
             echo $message;
             $results = $message;        
         }
@@ -232,7 +225,7 @@ class EasyBotter
             foreach($followlist as $id){    
                 $response = $this->followUser($id);
                 if(empty($response["errors"])){
-                    echo $response["name"]."(@<a href='https://twitter.com/".$response["screen_name"]."'>".$response["screen_name"]."</a>)をフォローしました<br /><br />";
+                    echo $response["name"]."(@".$response["screen_name"].")をフォローしました";
                 }
             }
         }            
@@ -468,10 +461,9 @@ class EasyBotter
             echo $message;
             return array("result"=> $message);
         }else{
-            $message = "「".$status."」を投稿しようとしましたが失敗しました。<br />";
+            $message = "「".$status."」を投稿しようとしましたが失敗しました。";
             echo $message;
             echo $response["errors"][0]["message"];               
-            echo "<br /><br />";
             return array("error" => $message);
         }
     }
