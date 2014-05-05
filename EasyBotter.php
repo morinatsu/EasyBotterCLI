@@ -77,7 +77,7 @@ class EasyBotter
     //表示用HTML
     function printHeader(){
         $header = '['.date("Y/m/d H:i:s").']';
-        print $header;
+        echo $header;
     }
     //表示用HTML
     function printFooter(){
@@ -454,10 +454,10 @@ class EasyBotter
     //結果を表示する
     function showResult($response, $status = NULL){    
         if(empty($response["errors"])){
-            $message = "Twitterへの投稿に成功しました。<br />";
-            $message .= "@<a href='http://twitter.com/".$response["user"]["screen_name"]."' target='_blank'>".$response["user"]["screen_name"]."</a>";
+            $message = "Twitterへの投稿に成功しました。";
+            $message .= "@".$response["user"]["screen_name"];
             $message .= "に投稿したメッセージ：".$response["text"];
-            $message .= " <a href='http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"]."' target='_blank'>http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"]."</a><br /><br />";
+            $message .= " http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"];
             echo $message;
             return array("result"=> $message);
         }else{
@@ -506,7 +506,7 @@ class EasyBotter
         }
         $url .= "count=100";
         $response = $this->_getData($url);
-        if($response["errors"]){
+        if(isset($response["errors"])){
             echo $response["errors"][0]["message"];               
         }                   
         return $response;
@@ -519,7 +519,7 @@ class EasyBotter
         }        
         $url .= "count=" .$num ;
         $response = $this->_getData($url);
-        if($response["errors"]){
+        if(isset($response["errors"])){
             echo $response["errors"][0]["message"];               
         }                   
         return $response;
@@ -536,7 +536,7 @@ class EasyBotter
     {
         $url = "https://api.twitter.com/1.1/friends/ids.json";
         $response = $this->_getData($url);
-        if($response["errors"]){
+        if(isset($response["errors"])){
             echo $response["errors"][0]["message"];               
         }                   
         return $response;
@@ -546,7 +546,7 @@ class EasyBotter
     {
         $url = "https://api.twitter.com/1.1/followers/ids.json";
         $response = $this->_getData($url);
-        if($response["errors"]){
+        if(isset($response["errors"])){
             echo $response["errors"][0]["message"];               
         }                   
         return $response;
