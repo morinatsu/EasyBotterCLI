@@ -20,10 +20,6 @@ class EasyBotter
         
     function __construct()
     {                        
-        //$dir = getcwd();
-        //$path = $dir."/PEAR";
-        $path = dirname(__FILE__) . "/PEAR";        
-        set_include_path(get_include_path() . PATH_SEPARATOR . $path);
         $inc_path = get_include_path();
         chdir(dirname(__FILE__));
         date_default_timezone_set("Asia/Tokyo");        
