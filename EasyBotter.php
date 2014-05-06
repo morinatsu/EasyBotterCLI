@@ -17,12 +17,14 @@ class EasyBotter
         private $_replyPatternData;        
         private $_logDataFile;
         private $_latestReply;
+        private $_header;
         
     function __construct()
     {                        
         $inc_path = get_include_path();
         chdir(dirname(__FILE__));
         date_default_timezone_set("Asia/Tokyo");        
+        $this->_header = '['.date("Y/m/d H:i:s").']';
         
         require_once("setting.php");
         $this->_screen_name = $screen_name;
@@ -76,12 +78,9 @@ class EasyBotter
     }        
     //表示用HTML
     function printHeader(){
-        $header = '['.date("Y/m/d H:i:s").']';
-        echo $header;
     }
     //表示用HTML
     function printFooter(){
-        echo "\n";
     }
 
 //============================================================
@@ -92,7 +91,7 @@ class EasyBotter
     function postRandom($datafile = "data.txt"){        
         $status = $this->makeTweet($datafile);                
         if(empty($status)){
-            $message = "投稿するメッセージがないようです。";
+            $message = $this->_header." 投稿するメッセージがないようです。\n";
             echo $message;
             return array("error"=> $message);
         }else{                
@@ -110,7 +109,7 @@ class EasyBotter
         if($status !== $lastPhrase){
             $this->rotateData($datafile);        
             if(empty($status)){
-                $message = "投稿するメッセージがないようです。";
+                $message = $this->_header." 投稿するメッセージがないようです。\n";
                 echo $message;
                 return array("error"=> $message);
             }else{                
@@ -121,7 +120,7 @@ class EasyBotter
                 return $this->showResult($this->setUpdate(array("status"=>$status)), $status);            
             }
         }else{
-            $message = "終了する予定のフレーズ「".$lastPhrase."」が来たので終了します。";
+            $message = $this->_header." 終了する予定のフレーズ「".$lastPhrase."」が来たので終了します。\n";
             echo $message;
             return array("error"=> $message);
         }
@@ -164,7 +163,7 @@ class EasyBotter
                 }
             }
         }else{
-            $message = $cron."分以内に受け取った未返答のリプライはないようです。";
+            $message = $this->_header." ".$cron."分以内に受け取った未返答のリプライはないようです。\n";
             echo $message;
             $results[] = $message;
         }
@@ -199,12 +198,12 @@ class EasyBotter
                     }
                 }
             }else{
-                $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。";
+                $message = $this->_header." ".$cron."分以内のタイムラインに未反応のキーワードはないみたいです。\n";
                 echo $message;
                 $results = $message;
             }
         }else{
-            $message = $cron."分以内のタイムラインに未反応のキーワードはないみたいです。";
+            $message = $this->_header." ".$cron."分以内のタイムラインに未反応のキーワードはないみたいです。\n";
             echo $message;
             $results = $message;        
         }
@@ -225,7 +224,7 @@ class EasyBotter
             foreach($followlist as $id){    
                 $response = $this->followUser($id);
                 if(empty($response["errors"])){
-                    echo $response["name"]."(@".$response["screen_name"].")をフォローしました";
+                    echo $this->_header." ".$response["name"]."(@".$response["screen_name"].")をフォローしました。\n";
                 }
             }
         }            
@@ -454,14 +453,14 @@ class EasyBotter
     //結果を表示する
     function showResult($response, $status = NULL){    
         if(empty($response["errors"])){
-            $message = "Twitterへの投稿に成功しました。";
+            $message = $this->_header." Twitterへの投稿に成功しました。";
             $message .= "@".$response["user"]["screen_name"];
             $message .= "に投稿したメッセージ：".$response["text"];
-            $message .= " http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"];
+            $message .= " http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"]."\n";
             echo $message;
             return array("result"=> $message);
         }else{
-            $message = "「".$status."」を投稿しようとしましたが失敗しました。";
+            $message = $this->_header." 「".$status."」を投稿しようとしましたが失敗しました。\n";
             echo $message;
             echo $response["errors"][0]["message"];               
             return array("error" => $message);
