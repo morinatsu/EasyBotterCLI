@@ -3,68 +3,70 @@
 //EasyBotter for CLI Ver1.0dev
 //updated 2014/05/05
 //============================================================
+namespace EasyBotterCLI\Botter;
+
 class EasyBotter
 {
-    private $_screen_name;
-    private $_consumer_key;
-    private $_consumer_secret;
-    private $_access_token;
-    private $_access_token_secret;
-    private $_replylooplimit;
-    private $_footer;
-    private $_dataseparator;
-    private $_tweetdata;
-    private $_replypatterndata;
-    private $_logdatafile;
-    private $_latestreply;
-    private $_header;
+    private $screen_name;
+    private $consumer_key;
+    private $consumer_secret;
+    private $access_token;
+    private $access_token_secret;
+    private $replylooplimit;
+    private $footer;
+    private $dataseparator;
+    private $tweetdata;
+    private $replypatterndata;
+    private $logdatafile;
+    private $latestreply;
+    private $header;
 
-    function __construct()
+    public function __construct()
     {
         $inc_path = get_include_path();
         chdir(dirname(__file__));
         date_default_timezone_set("asia/tokyo");
-        $this->_header = '['.date("y/m/d h:i:s").']';
+        $this->header = '['.date("y/m/d h:i:s").']';
 
         require_once("setting.php");
-        $this->_screen_name = $screen_name;
-        $this->_consumer_key = $consumer_key;
-        $this->_consumer_secret = $consumer_secret;
-        $this->_access_token = $access_token;
-        $this->_access_token_secret = $access_token_secret;
-        $this->_replylooplimit = $replylooplimit;
-        $this->_footer  = $footer;
-        $this->_dataseparator = $dataseparator;
-        $this->_logdatafile = "log.dat";
-        $this->_log = json_decode(file_get_contents($this->_logdatafile), true);
-        $this->_latestreply = $this->_log["latest_reply"];
-        $this->_latestreplytimeline = $this->_log["latest_reply_tl"];
+        $this->screen_name = $setting->screen_name;
+        $this->consumer_key = $setting->consumer_key;
+        $this->consumer_secret = $setting->consumer_secret;
+        $this->access_token = $setting->access_token;
+        $this->access_token_secret = $setting->access_token_secret;
+        $this->replylooplimit = $setting->replylooplimit;
+        $this->footer  = $setting->footer;
+        $this->dataseparator = $setting->dataseparator;
+        $this->logdatafile = "log.dat";
+        $this->log = json_decode(file_get_contents($this->logdatafile), true);
+        $this->latestreply = $this->log["latest_reply"];
+        $this->latestreplytimeline = $this->log["latest_reply_tl"];
 
         require_once("http/oauth/consumer.php");
         $this->oauth_consumer_build();
         $this->printheader();
     }
 
-    function __destruct()
+    public function __destruct()
     {
         $this->printfooter();
     }
 
     //つぶやきデータを読み込む
-    function readdatafile($file)
+    private function readdatafile($file)
     {
         if (preg_match("@\.php$@", $file) == 1) {
             require_once($file);
             return $data;
         } else {
             $tweets = trim(file_get_contents($file));
-            $tweets = preg_replace("@".$this->_dataseparator."+@", $this->_dataseparator, $tweets);
-            $data = explode($this->_dataseparator, $tweets);
+            $tweets = preg_replace("@".$this->dataseparator."+@", $this->dataseparator, $tweets);
+            $data = explode($this->dataseparator, $tweets);
             return $data;
         }
     }
     //リプライパターンデータを読み込む
-    function readpatternfile($file)
+    private function readpatternfile($file)
     {
         $data = array();
         require_once($file);
@@ -75,17 +77,17 @@ class EasyBotter
         }
     }
     //どこまでリプライしたかを覚えておく
-    function savelog($name, $data)
+    private function savelog($name, $data)
     {
-        $this->_log[$name] = $data;
-        file_put_contents($this->_logdatafile, json_encode($this->_log));
+        $this->log[$name] = $data;
+        file_put_contents($this->logdatafile, json_encode($this->log));
     }
     //表示用html
-    function printheader()
+    private function printheader()
     {
     }
     //表示用html
-    function printfooter()
+    private function printfooter()
     {
     }
 
@@ -94,52 +96,53 @@ class EasyBotter
 //============================================================
 
     //ランダムにポストする
-    function postrandom($datafile = "data.txt")
+    public function postrandom($datafile = "data.txt")
     {
         $status = $this->maketweet($datafile);
         if (empty($status)) {
-            $message = $this->_header." 投稿するメッセージがないようです。\n";
+            $message = $this->header." 投稿するメッセージがないようです。\n";
             echo $message;
             return array("error"=> $message);
         } else {
             //idなどの変換
             $status = $this->converttext($status);
             //フッターを追加
-            $status .= $this->_footer;
+            $status .= $this->footer;
             return $this->showresult($this->setupdate(array("status"=>$status)), $status);
         }
     }
 
     //順番にポストする
-    function postrotation($datafile = "data.txt", $lastphrase = false)
+    public function postrotation($datafile = "data.txt", $lastphrase = false)
     {
         $status = $this->maketweet($datafile, 0);
         if ($status !== $lastphrase) {
             $this->rotatedata($datafile);
             if (empty($status)) {
-                $message = $this->_header." 投稿するメッセージがないようです。\n";
+                $message = $this->header." 投稿するメッセージがないようです。\n";
                 echo $message;
                 return array("error"=> $message);
             } else {
                 //idなどの変換
                 $status = $this->converttext($status);
                 //フッターを追加
-                $status .= $this->_footer;
+                $status .= $this->footer;
                 return $this->showresult($this->setupdate(array("status"=>$status)), $status);
             }
         } else {
-            $message = $this->_header." 終了する予定のフレーズ「".$lastPhrase."」が来たので終了します。\n";
+            $message = $this->header." 終了する予定のフレーズ「".$lastPhrase.
+                "」が来たので終了します。\n";
             echo $message;
             return array("error"=> $message);
         }
     }
 
     //リプライする
-    function reply($cron = 2, $replyFile = "data.txt", $replyPatternFile = "reply_pattern.php")
+    public function reply($cron = 2, $replyFile = "data.txt", $replyPatternFile = "reply_pattern.php")
     {
-        $replyLoopLimit = $this->_replyLoopLimit;
+        $replyLoopLimit = $this->replyLoopLimit;
         //リプライを取得
-        $response = $this->getReplies($this->_latestReply);
+        $response = $this->getReplies($this->latestReply);
         $response = $this->getRecentTweets($response, $cron * $replyLoopLimit * 3);
         $replies = $this->getRecentTweets($response, $cron);
         $replies = $this->selectTweets($replies);
@@ -164,7 +167,8 @@ class EasyBotter
                 $replyTweets = $this->makeReplyTweets($replies2, $replyFile, $replyPatternFile);
                 $repliedReplies = array();
                 foreach ($replyTweets as $rep) {
-                    $response = $this->setUpdate(array("status"=>$rep["status"],'in_reply_to_status_id'=>$rep["in_reply_to_status_id"]));
+                    $response = $this->setUpdate(array("status"=>$rep["status"],
+                        'in_reply_to_status_id'=>$rep["in_reply_to_status_id"]));
                     $results[] = $this->showResult($response, $rep["status"]);
                     if ($response["in_reply_to_status_id_str"]) {
                         $repliedReplies[] = $response["in_reply_to_status_id_str"];
@@ -172,7 +176,8 @@ class EasyBotter
                 }
             }
         } else {
-            $message = $this->_header." ".$cron."分以内に受け取った未返答のリプライはないようです。\n";
+            $message = $this->header." ".
+                $cron."分以内に受け取った未返答のリプライはないようです。\n";
             echo $message;
             $results[] = $message;
         }
@@ -186,10 +191,10 @@ class EasyBotter
     }
 
     //タイムラインに反応する
-    function replyTimeline($cron = 2, $replyPatternFile = "reply_pattern.php")
+    public function replyTimeline($cron = 2, $replyPatternFile = "reply_pattern.php")
     {
         //タイムラインを取得
-        $timeline = $this->getFriendsTimeline($this->_latestReplyTimeline, 100);
+        $timeline = $this->getFriendsTimeline($this->latestReplyTimeline, 100);
         $timeline2 = $this->getRecentTweets($timeline, $cron);
         $timeline2 = $this->selectTweets($timeline2);
         $timeline2 = array_reverse($timeline2);
@@ -200,7 +205,8 @@ class EasyBotter
             if (count($replyTweets) != 0) {
                 $repliedTimeline = array();
                 foreach ($replyTweets as $rep) {
-                    $response = $this->setUpdate(array("status"=>$rep["status"],'in_reply_to_status_id'=>$rep["in_reply_to_status_id"]));
+                    $response = $this->setUpdate(array("status"=>$rep["status"],
+                        'in_reply_to_status_id'=>$rep["in_reply_to_status_id"]));
                     $result = $this->showResult($response, $rep["status"]);
                     $results[] = $result;
                     if (!empty($response["in_reply_to_status_id_str"])) {
@@ -208,12 +214,14 @@ class EasyBotter
                     }
                 }
             } else {
-                $message = $this->_header." ".$cron."分以内のタイムラインに未反応のキーワードはないみたいです。\n";
+                $message = $this->header." ".
+                    $cron."分以内のタイムラインに未反応のキーワードはないみたいです。\n";
                 echo $message;
                 $results = $message;
             }
         } else {
-            $message = $this->_header." ".$cron."分以内のタイムラインに未反応のキーワードはないみたいです。\n";
+            $message = $this->header." ".$cron.
+                "分以内のタイムラインに未反応のキーワードはないみたいです。\n";
             echo $message;
             $results = $message;
         }
@@ -226,7 +234,7 @@ class EasyBotter
     }
 
     //自動フォロー返しする
-    function autoFollow()
+    public function autoFollow()
     {
         $followers = $this->getFollowers();
         $friends = $this->getFriends();
@@ -235,7 +243,8 @@ class EasyBotter
             foreach ($followlist as $id) {
                 $response = $this->followUser($id);
                 if (empty($response["errors"])) {
-                    echo $this->_header." ".$response["name"]."(@".$response["screen_name"].")をフォローしました。\n";
+                    echo $this->header." ".$response["name"]."(@".$response["screen_name"].
+                        ")をフォローしました。\n";
                 }
             }
         }
@@ -246,35 +255,35 @@ class EasyBotter
 //============================================================
 
     //発言を作る
-    function makeTweet($file, $number = false)
+    private function makeTweet($file, $number = false)
     {
         //txtファイルの中身を配列に格納
-        if (empty($this->_tweetData[$file])) {
-            $this->_tweetData[$file] = $this->readDataFile($file);
+        if (empty($this->tweetData[$file])) {
+            $this->tweetData[$file] = $this->readDataFile($file);
         }
         //発言をランダムに一つ選ぶ場合
         if ($number === false) {
-            $status = $this->_tweetData[$file][array_rand($this->_tweetData[$file])];
+            $status = $this->tweetData[$file][array_rand($this->tweetData[$file])];
         } else {
         //番号で指定された発言を選ぶ場合
-            $status = $this->_tweetData[$file][$number];
+            $status = $this->tweetData[$file][$number];
         }
         return $status;
     }
 
     //リプライを作る
-    function makeReplyTweets($replies, $replyFile, $replyPatternFile)
+    private function makeReplyTweets($replies, $replyFile, $replyPatternFile)
     {
         if (empty($this->_replyPatternData[$replyPatternFile]) && !empty($replyPatternFile)) {
-            $this->_replyPatternData[$replyPatternFile] = $this->readPatternFile($replyPatternFile);
+            $this->replyPatternData[$replyPatternFile] = $this->readPatternFile($replyPatternFile);
         }
         $replyTweets = array();
 
         foreach ($replies as $reply) {
             $status = "";
             //指定されたリプライパターンと照合
-            if (!empty($this->_replyPatternData[$replyPatternFile])) {
-                foreach ($this->_replyPatternData[$replyPatternFile] as $pattern => $res) {
+            if (!empty($this->replyPatternData[$replyPatternFile])) {
+                foreach ($this->replyPatternData[$replyPatternFile] as $pattern => $res) {
                     if (preg_match("@".$pattern."@u", $reply["text"], $matches) === 1) {
                         $status = $res[array_rand($res)];
                         for ($i=1; $i <count($matches); $i++) {
@@ -310,17 +319,18 @@ class EasyBotter
     }
 
     //タイムラインへの反応を作る
-    function makeReplyTimelineTweets($timeline, $replyPatternFile)
+    private function makeReplyTimelineTweets($timeline, $replyPatternFile)
     {
-        if (empty($this->_replyPatternData[$replyPatternFile])) {
-            $this->_replyPatternData[$replyPatternFile] = $this->readPatternFile($replyPatternFile);
+        if (empty($this->replyPatternData[$replyPatternFile])) {
+            $this->replyPatternData[$replyPatternFile] = $this->readPatternFile($replyPatternFile);
         }
         $replyTweets = array();
         foreach ($timeline as $tweet) {
             $status = "";
             //リプライパターンと照合
-            foreach ($this->_replyPatternData[$replyPatternFile] as $pattern => $res) {
-                if (preg_match("@".$pattern."@u", $tweet["text"], $matches) === 1 && !preg_match("/\@/i", $tweet["text"])) {
+            foreach ($this->replyPatternData[$replyPatternFile] as $pattern => $res) {
+                if (preg_match("@".$pattern."@u", $tweet["text"], $matches) === 1 &&
+                    !preg_match("/\@/i", $tweet["text"])) {
                     $status = $res[array_rand($res)];
                     for ($i=1; $i <count($matches); $i++) {
                         $p = "$".$i;
@@ -335,7 +345,7 @@ class EasyBotter
             //idなどを変換
             $status = $this->convertText($status, $tweet);
             //フッターを追加
-            $status .= $this->_footer;
+            $status .= $this->footer;
 
             //リプライ相手、リプライ元を付与
             $rep = array();
@@ -350,7 +360,7 @@ class EasyBotter
     }
 
     //ログの順番を並び替える
-    function rotateData($file)
+    private function rotateData($file)
     {
         $tweetsData = file_get_contents($file);
         $tweets = explode("\n", $tweetsData);
@@ -370,7 +380,7 @@ class EasyBotter
     }
 
     //つぶやきの中から$minute分以内のものと、最後にリプライしたもの以降のものだけを返す
-    function getRecentTweets($tweets, $minute)
+    private function getRecentTweets($tweets, $minute)
     {
         $tweets2 = array();
         $now = strtotime("now");
@@ -387,12 +397,12 @@ class EasyBotter
     }
 
     //取得したつぶやきを条件で絞る
-    function selectTweets($tweets)
+    private function selectTweets($tweets)
     {
         $tweets2 = array();
         foreach ($tweets as $tweet) {
             //自分自身のつぶやきを除外する
-            if ($this->_screen_name == $tweet["user"]["screen_name"]) {
+            if ($this->screen_name == $tweet["user"]["screen_name"]) {
                 continue;
             }
             //RT, QTを除外する
@@ -405,7 +415,7 @@ class EasyBotter
     }
 
     //文章を変換する
-    function convertText($text, $reply = false)
+    private function convertText($text, $reply = false)
     {
         $text = str_replace("{year}", date("Y"), $text);
         $text = str_replace("{month}", date("n"), $text);
@@ -453,7 +463,7 @@ class EasyBotter
     }
 
     //タイムラインの最近30件の呟きからランダムに一つを取得
-    function getRandomTweet($num = 30)
+    private function getRandomTweet($num = 30)
     {
         $response = $this->getFriendsTimeline(null, $num);
         if ($response["errors"]) {
@@ -461,7 +471,7 @@ class EasyBotter
         } else {
             for ($i=0; $i < $num; $i++) {
                 $randomTweet = $response[array_rand($response)];
-                if ($randomTweet["user"]["screen_name"] != $this->_screen_name) {
+                if ($randomTweet["user"]["screen_name"] != $this->screen_name) {
                     return $randomTweet;
                 }
             }
@@ -470,17 +480,17 @@ class EasyBotter
     }
 
     //結果を表示する
-    function showResult($response, $status = null)
+    private function showResult($response, $status = null)
     {
         if (empty($response["errors"])) {
-            $message = $this->_header." Twitterへの投稿に成功しました。";
+            $message = $this->header." Twitterへの投稿に成功しました。";
             $message .= "@".$response["user"]["screen_name"];
             $message .= "に投稿したメッセージ：".$response["text"];
             $message .= " http://twitter.com/".$response["user"]["screen_name"]."/status/".$response["id_str"]."\n";
             echo $message;
             return array("result"=> $message);
         } else {
-            $message = $this->_header." 「".$status."」を投稿しようとしましたが失敗しました。\n";
+            $message = $this->header." 「".$status."」を投稿しようとしましたが失敗しました。\n";
             echo $message;
             echo $response["errors"][0]["message"];
             return array("error" => $message);
@@ -491,21 +501,21 @@ class EasyBotter
 //============================================================
 //基本的なAPIを叩くための関数
 //============================================================
-    function _setData($url, $value = array())
+    private function setData($url, $value = array())
     {
-        $this->OAuth_Consumer_build();//ここでHTTP_OAuth_Consumerを作り直し
+        $this->oAuthConsumerBuild();//ここでHTTP_OAuth_Consumerを作り直し
         return json_decode($this->consumer->sendRequest($url, $value, "POST")->getBody(), true);
     }
 
-    function _getData($url)
+    private function getData($url)
     {
-        $this->OAuth_Consumer_build();//ここでHTTP_OAuth_Consumerを作り直し
+        $this->oAuthConsumerBuild();//ここでHTTP_OAuth_Consumerを作り直し
         return json_decode($this->consumer->sendRequest($url, array(), "GET")->getBody(), true);
     }
 
-    function OAuth_Consumer_build()
+    private function oAuthConsumerBuild()
     {
-        $this->consumer = new HTTP_OAuth_Consumer($this->_consumer_key, $this->_consumer_secret);
+        $this->consumer = new HTTP_OAuth_Consumer($this->consumer_key, $this->consumer_secret);
         $http_request = new HTTP_Request2();
         $http_request->setConfig('ssl_verify_peer', false);
         $consumer_request = new HTTP_OAuth_Consumer_Request;
@@ -516,74 +526,74 @@ class EasyBotter
         return;
     }
 
-    function setUpdate($value)
+    private function setUpdate($value)
     {
         $url = "https://api.twitter.com/1.1/statuses/update.json";
-        return $this->_setData($url, $value);
+        return $this->setData($url, $value);
     }
 
-    function getReplies($since_id = null)
+    private function getReplies($since_id = null)
     {
         $url = "https://api.twitter.com/1.1/statuses/mentions_timeline.json?";
         if ($since_id) {
             $url .= 'since_id=' . $since_id ."&";
         }
         $url .= "count=100";
-        $response = $this->_getData($url);
+        $response = $this->getData($url);
         if (isset($response["errors"])) {
             echo $response["errors"][0]["message"];
         }
         return $response;
     }
 
-    function getFriendsTimeline($since_id = 0, $num = 100)
+    private function getFriendsTimeline($since_id = 0, $num = 100)
     {
         $url = "https://api.twitter.com/1.1/statuses/home_timeline.json?";
         if ($since_id) {
             $url .= 'since_id=' . $since_id ."&";
         }
         $url .= "count=" .$num ;
-        $response = $this->_getData($url);
+        $response = $this->getData($url);
         if (isset($response["errors"])) {
             echo $response["errors"][0]["message"];
         }
         return $response;
     }
 
-    function followUser($id)
+    private function followUser($id)
     {
         $url = "https://api.twitter.com/1.1/friendships/create.json";
         $value = array("user_id"=>$id, "follow"=>"true");
-        return $this->_setData($url, $value);
+        return $this->setData($url, $value);
     }
 
-    function getFriends($id = null)
+    private function getFriends($id = null)
     {
         $url = "https://api.twitter.com/1.1/friends/ids.json";
-        $response = $this->_getData($url);
+        $response = $this->getData($url);
         if (isset($response["errors"])) {
             echo $response["errors"][0]["message"];
         }
         return $response;
     }
 
-    function getFollowers()
+    private function getFollowers()
     {
         $url = "https://api.twitter.com/1.1/followers/ids.json";
-        $response = $this->_getData($url);
+        $response = $this->getData($url);
         if (isset($response["errors"])) {
             echo $response["errors"][0]["message"];
         }
         return $response;
     }
 
-    function checkApi($resources = "statuses")
+    private function checkApi($resources = "statuses")
     {
         $url = "https://api.twitter.com/1.1/application/rate_limit_status.json";
         if ($resources) {
             $url .= '?resources=' . $resources;
         }
-        $response = $this->_getData($url);
+        $response = $this->getData($url);
         var_dump($response);
     }
 }
