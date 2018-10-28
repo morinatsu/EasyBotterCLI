@@ -1,0 +1,22 @@
+{
+    "name": "morinatsu/easy-botter-cli",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Natsuki Mori",
+            "email": "morinatsu@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+	    "type": "pear",
+	    "url": "https://pear.php.net"
+	}
+    ],
+    "require": {
+	"pear-pear.php.net/http_oauth": "0.3.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "7.*"
+    }
+}

@@ -3,7 +3,11 @@
 //EasyBotter for CLI Ver1.0dev
 //updated 2014/05/05
 //============================================================
-namespace EasyBotterCLI\Botter;
+namespace EasyBotterCLI;
+
+require_once "vendor/autoload.php";
+
+#use function HTTP\OAuth\Consumer\HTTP_OAuth_Consumer;
 
 class EasyBotter
 {
@@ -29,21 +33,21 @@ class EasyBotter
         $this->header = '['.date("y/m/d h:i:s").']';
 
         require_once("setting.php");
-        $this->screen_name = $setting->screen_name;
-        $this->consumer_key = $setting->consumer_key;
-        $this->consumer_secret = $setting->consumer_secret;
-        $this->access_token = $setting->access_token;
-        $this->access_token_secret = $setting->access_token_secret;
-        $this->replylooplimit = $setting->replylooplimit;
-        $this->footer  = $setting->footer;
-        $this->dataseparator = $setting->dataseparator;
+        $this->screen_name = $screen_name;
+        $this->consumer_key = $consumer_key;
+        $this->consumer_secret = $consumer_secret;
+        $this->access_token = $access_token;
+        $this->access_token_secret = $access_token_secret;
+        $this->replylooplimit = $replyLoopLimit;
+        $this->footer  = $footer;
+        $this->dataseparator = $dataSeparator;
         $this->logdatafile = "log.dat";
         $this->log = json_decode(file_get_contents($this->logdatafile), true);
         $this->latestreply = $this->log["latest_reply"];
         $this->latestreplytimeline = $this->log["latest_reply_tl"];
 
-        require_once("http/oauth/consumer.php");
-        $this->oauth_consumer_build();
+        require_once("HTTP/OAuth/Consumer.php");
+        $this->oAuthConsumerBuild();
         $this->printheader();
     }
 
@@ -515,14 +519,14 @@ class EasyBotter
 
     private function oAuthConsumerBuild()
     {
-        $this->consumer = new HTTP_OAuth_Consumer($this->consumer_key, $this->consumer_secret);
-        $http_request = new HTTP_Request2();
+        $this->consumer = new \HTTP_OAuth_Consumer($this->consumer_key, $this->consumer_secret);
+        $http_request = new \HTTP_Request2();
         $http_request->setConfig('ssl_verify_peer', false);
-        $consumer_request = new HTTP_OAuth_Consumer_Request;
+        $consumer_request = new \HTTP_OAuth_Consumer_Request;
         $consumer_request->accept($http_request);
         $this->consumer->accept($consumer_request);
-        $this->consumer->setToken($this->_access_token);
-        $this->consumer->setTokenSecret($this->_access_token_secret);
+        $this->consumer->setToken($this->access_token);
+        $this->consumer->setTokenSecret($this->access_token_secret);
         return;
     }
 
